@@ -96,7 +96,9 @@ def run_agent(user_query):
 
 if __name__ == "__main__":
     # Search (Automatic Google Grounding)
-    run_agent("Who won the last IPL?")
+    # run_agent("Who won the last IPL?")
 
     # Weather (Manual Tool Loop)
     # run_agent("What is the weather in Tokyo?")
+
+    run_agent("My name is Yash. Can you remember my name?")

@@ -1,0 +1,18 @@
+[
+  {
+    "role": "user",
+    "parts": [
+      {
+        "text": "My name is Yash."
+      }
+    ]
+  },
+  {
+    "role": "model",
+    "parts": [
+      {
+        "text": "Copy that, Yash. How may I assist your voyage today?"
+      }
+    ]
+  }
+]
