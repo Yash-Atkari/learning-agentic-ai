@@ -1,2 +1,5 @@
 .env
 __pycache__/
+token.json
+credentials.json
+faiss_index_react/
