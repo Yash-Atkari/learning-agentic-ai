@@ -1,4 +1,5 @@
 import os
+import datetime
 from dotenv import load_dotenv
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.tools import tool
@@ -11,20 +12,23 @@ from langchain_community.tools.gmail.utils import build_resource_service, get_gm
 from langgraph.graph import StateGraph, START, END, MessagesState
 from langgraph.prebuilt import ToolNode, tools_condition
 
+# Tavily imports
+from langchain_community.tools.tavily_search import TavilySearchResults
+
 load_dotenv()
 
-system_prompt = """
+# 1. Get the real date dynamically
+current_date = datetime.datetime.now().strftime("%A, %B %d, %Y")
+
+system_prompt = f"""
 You are planX, a smart assistant for a Developer/Student.
+Current Date: {current_date}
 Your Goal: Automate daily tasks to save time.
 
 Capabilities:
 1. GMAIL: Check unread emails, send replies, delete promotions.
 2. CALENDAR: Check schedule, book meetings, find free slots.
-
-Guidelines:
-- If a user asks to "start my day", check BOTH emails and calendar.
-- Always confirm before sending an email or deleting items.
-- Be concise. Developers don't like long paragraphs.
+3. SEARCH: Search real-time information using search tool.
 """
 print("PlanX system initializing...")
 
@@ -38,11 +42,16 @@ llm = ChatGoogleGenerativeAI(
 print("   - Loading Gmail Toolkit...")
 # This looks for 'credentials.json' in your folder automatically
 gmail_tools = GmailToolkit().get_tools()
-print("   - Loading Calendar Toolkit...")
+
 # Get the list of pre-built tools (Read, Send, Search, etc.)
+print("   - Loading Calendar Toolkit...")
 calendar_tools = CalendarToolkit().get_tools()
 
-master_tools = gmail_tools + calendar_tools
+# Initialize the search tool
+print("   - Loading Tavily Search Tool...")
+search_tool = TavilySearchResults(max_results=3)
+
+master_tools = gmail_tools + calendar_tools + [search_tool]
 
 print(f"Tools Ready: {len(master_tools)} loaded.")
 
