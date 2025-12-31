@@ -15,6 +15,44 @@ from langgraph.prebuilt import ToolNode, tools_condition
 # Tavily imports
 from langchain_community.tools.tavily_search import TavilySearchResults
 
+# # Voice imports
+# import speech_recognition as sr
+# import pyttsx3
+
+# # Initialize Text-to-Speech Engine
+# engine = pyttsx3.init()
+
+# # Optional: Set Voice (0 = Male, 1 = Female usually)
+# voices = engine.getProperty('voices')
+# engine.setProperty('voice', voices[1].id) # Change index to 0 for Male
+
+# def speak(text):
+#     """The AI speaks the text"""
+#     print(f"PlanX: {text}") # Print it too
+#     engine.say(text)
+#     engine.runAndWait()
+
+# def listen():
+#     """Listens to the microphone and returns text"""
+#     r = sr.Recognizer()
+#     with sr.Microphone() as source:
+#         print("Listening... (Speak now)")
+#         try:
+#             # Listen for audio (timeout after 5 seconds of silence)
+#             audio = r.listen(source, timeout=5, phrase_time_limit=10)
+#             print("Thinking...")
+#             command = r.recognize_google(audio) # Uses Google's free API
+#             print(f"User said: {command}")
+#             return command
+#         except sr.WaitTimeoutError:
+#             return None
+#         except sr.UnknownValueError:
+#             print("Sorry, I didn't catch that.")
+#             return None
+#         except sr.RequestError:
+#             print("Network error with Speech API.")
+#             return None
+    
 load_dotenv()
 
 # 1. Get the real date dynamically
@@ -86,6 +124,8 @@ print("PlanX v1.0 is online")
 print("(Type 'exit' or 'quit' to stop)")
 print("="*40 + "\n")
 
+# # Start with a greeting
+# speak("PlanX is online. How can I help you?")
 
 # Initialize Chat Memory with System Prompt
 current_state = {
@@ -96,25 +136,44 @@ while True:
     try:
         # 1. Get User Input
         user_input = input("User: ")
-        if user_input.lower() in ["exit", "quit"]:
-            print("PlanX shutting down. Goodbye!")
+        
+        # 2. Check for Exit
+        if user_input.lower() in ["exit", "stop", "quit", "q"]:
+            print("PlanX: Shutting down. Goodbye!")
             break
         
-        # 2. Add User Message to State
+        # 3. Add User Message to State
         current_state["messages"].append(HumanMessage(content=user_input))
 
-        # 3. Run the Graph
-        # We pass the accumulated state to the graph
-        # invoke() returns the FINAL state after all tools have run
+        # 4. Run the Graph
         final_state = app.invoke(current_state)
 
-        # 4. Extract and Print Response
-        # The last message in 'final_state' is the AI's final answer
+        # 5. Extract Response (Handling both Strings and Lists)
         ai_response = final_state["messages"][-1]
-        print(f"\nPlanX: {ai_response.content}\n")
+        content = ai_response.content
+        
+        final_text = ""
 
-        # 5. Update Memory
-        # We save the final state so the next loop remembers what happened
+        # Case A: Simple String
+        if isinstance(content, str):
+            final_text = content
+            
+        # Case B: Gemini List (Complex response)
+        elif isinstance(content, list):
+            for part in content:
+                if isinstance(part, dict) and "text" in part:
+                    final_text += part["text"]
+                elif isinstance(part, str):
+                    final_text += part
+
+        # Fallback if empty
+        if not final_text:
+            final_text = "Task completed."
+
+        # 6. Print the Response
+        print(f"\nPlanX: {final_text}\n")
+
+        # 7. Update Memory
         current_state = final_state
 
     except Exception as e:
